@@ -1,0 +1,282 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+:root {
+    --bg-color: #0f1115;
+    --card-bg: #1a1d24;
+    --card-border: #2a2e37;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --accent-color: #3b82f6;
+    --accent-hover: #2563eb;
+    --danger-color: #ef4444;
+    --danger-hover: #dc2626;
+    --success-color: #10b981;
+    --border-radius: 12px;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+}
+
+.dashboard-container {
+    width: 100%;
+    max-width: 900px;
+}
+
+header {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+/* --- App Card --- */
+.app-card {
+    background-color: var(--card-bg);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--card-border);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+}
+
+/* Gradient overlay for background images — ensures text readability */
+.card-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15, 17, 21, 0.85) 0%, rgba(15, 17, 21, 0.7) 100%);
+    z-index: 0;
+    pointer-events: none;
+    border-radius: var(--border-radius);
+    opacity: 0;
+    /* hidden by default, shown when a bg image is set */
+    transition: opacity 0.3s ease;
+}
+
+.app-card.has-bg .card-bg-overlay {
+    opacity: 1;
+}
+
+.app-card>*:not(.card-bg-overlay) {
+    position: relative;
+    z-index: 1;
+}
+
+.app-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border-color: #3f4552;
+}
+
+/* --- App Info --- */
+.app-info {
+    margin-bottom: 1.5rem;
+}
+
+.app-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.app-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.app-card:hover .icon-btn {
+    opacity: 0.6;
+}
+
+.icon-btn:hover {
+    opacity: 1 !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Background edit button — bottom-right corner */
+.edit-bg-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    z-index: 2;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #6b7280;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* --- Status States --- */
+.app-card.running .status-dot {
+    background-color: var(--success-color);
+    box-shadow: 0 0 10px var(--success-color);
+}
+
+.app-card.running .status-text {
+    color: var(--success-color);
+}
+
+.app-card.stopped .status-dot {
+    background-color: var(--danger-color);
+}
+
+.app-card.working {
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.app-card.working .status-dot {
+    background-color: #fbbf24;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.5;
+        transform: scale(0.9);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1.1);
+        box-shadow: 0 0 10px #fbbf24;
+    }
+}
+
+/* --- Buttons --- */
+.app-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    text-decoration: none;
+}
+
+.btn:active {
+    transform: scale(0.96);
+}
+
+.btn-primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: var(--danger-hover);
+}
+
+.btn-secondary {
+    background-color: #374151;
+    color: white;
+    flex-basis: 100%;
+}
+
+.btn-secondary:hover {
+    background-color: #4b5563;
+}
+
+/* Show/hide buttons based on state */
+.app-card.running .start-btn {
+    display: none;
+}
+
+.app-card.running .open-btn {
+    display: block;
+}
+
+.app-card:not(.running) .stop-btn {
+    display: none;
+}
+
+.app-card:not(.running) .open-btn {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .app-grid {
+        grid-template-columns: 1fr;
+    }
+}

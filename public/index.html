@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>Application Dashboard</h1>
+            <p>Manage and launch your self-hosted services from one unified space.</p>
+        </header>
+
+        <main class="app-grid" id="app-grid">
+            <!-- App cards will be dynamically injected here by app.js -->
+        </main>
+    </div>
+
+    <!-- Template for an app card -->
+    <template id="app-card-template">
+        <div class="app-card">
+            <div class="card-bg-overlay"></div>
+            <div class="app-info">
+                <div class="app-name-row">
+                    <h2 class="app-name"></h2>
+                    <button class="icon-btn edit-name-btn" title="Rename app" aria-label="Rename app">✏️</button>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Status Unknown</span>
+                </div>
+            </div>
+            <div class="app-actions">
+                <button class="btn btn-primary start-btn" aria-label="Start App">Start</button>
+                <button class="btn btn-danger stop-btn" aria-label="Stop App">Stop</button>
+                <a href="#" class="btn btn-secondary open-btn" target="_blank" rel="noopener noreferrer">Open App</a>
+            </div>
+            <button class="icon-btn edit-bg-btn" title="Change background image"
+                aria-label="Change background image">🖼️</button>
+            <input type="file" class="bg-file-input" accept="image/*" style="display: none;">
+        </div>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
