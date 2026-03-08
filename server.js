@@ -21,7 +21,7 @@ const apps = {
         // Using common paths, these might need adjusting on the actual Pi
         startCmd: 'docker-compose up -d',
         stopCmd: 'docker-compose down',
-        cwd: '/Users/andrewsanders/Documents/DevProjects/Provision'
+        cwd: path.join(__dirname, '..', 'Provision')
     },
     'chore-chart': {
         id: 'chore-chart',
@@ -29,7 +29,7 @@ const apps = {
         port: 3000,
         startCmd: 'docker-compose up -d',
         stopCmd: 'docker-compose down',
-        cwd: '/Users/andrewsanders/Documents/DevProjects/chore-chart'
+        cwd: path.join(__dirname, '..', 'chore-chart')
     },
     'dnd-builder': {
         id: 'dnd-builder',
@@ -38,7 +38,7 @@ const apps = {
         // On the Pi, this will likely be managed by PM2, but for local testing:
         startCmd: 'npm run dev > /dev/null 2>&1 &',
         stopCmd: 'pkill -f "vite"', // Needs refinement for production
-        cwd: '/Users/andrewsanders/Documents/DevProjects/DnDCharacterBuilder'
+        cwd: path.join(__dirname, '..', 'DnDCharacterBuilder')
     }
 };
 
