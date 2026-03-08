@@ -3,6 +3,7 @@ import cors from 'cors';
 import { exec } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,6 +12,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Helper to find app directories case-insensitively in the parent folder
+function findAppDir(targetNames) {
+    const parentDir = path.join(__dirname, '..');
+    if (fs.existsSync(parentDir)) {
+        const dirs = fs.readdirSync(parentDir);
+        for (const targetName of targetNames) {
+            const match = dirs.find(d => d.toLowerCase() === targetName.toLowerCase());
+            if (match) {
+                return path.join(parentDir, match);
+            }
+        }
+    }
+    return path.join(parentDir, targetNames[0]);
+}
+
 
 // Configuration for the apps to manage
 const apps = {
@@ -21,7 +38,7 @@ const apps = {
         // Using common paths, these might need adjusting on the actual Pi
         startCmd: 'docker-compose up -d',
         stopCmd: 'docker-compose down',
-        cwd: path.join(__dirname, '..', 'Provision')
+        cwd: findAppDir(['Provision', 'DuneProvision'])
     },
     'chore-chart': {
         id: 'chore-chart',
@@ -29,7 +46,7 @@ const apps = {
         port: 3000,
         startCmd: 'docker-compose up -d',
         stopCmd: 'docker-compose down',
-        cwd: path.join(__dirname, '..', 'chore-chart')
+        cwd: findAppDir(['chore-chart', 'DuneStewardship'])
     },
     'dnd-builder': {
         id: 'dnd-builder',
@@ -38,7 +55,7 @@ const apps = {
         // On the Pi, this will likely be managed by PM2, but for local testing:
         startCmd: 'npm run dev > /dev/null 2>&1 &',
         stopCmd: 'pkill -f "vite"', // Needs refinement for production
-        cwd: path.join(__dirname, '..', 'DnDCharacterBuilder')
+        cwd: findAppDir(['DnDCharacterBuilder'])
     }
 };
 
@@ -52,6 +69,10 @@ app.post('/api/apps/:id/start', (req, res) => {
     const appConfig = apps[req.params.id];
     if (!appConfig) {
         return res.status(404).json({ error: 'App not found' });
+    }
+
+    if (!fs.existsSync(appConfig.cwd)) {
+        return res.status(500).json({ error: `Directory not found: ${appConfig.cwd}` });
     }
 
     console.log(`Starting ${appConfig.name}...`);
@@ -68,6 +89,10 @@ app.post('/api/apps/:id/stop', (req, res) => {
     const appConfig = apps[req.params.id];
     if (!appConfig) {
         return res.status(404).json({ error: 'App not found' });
+    }
+
+    if (!fs.existsSync(appConfig.cwd)) {
+        return res.status(500).json({ error: `Directory not found: ${appConfig.cwd}` });
     }
 
     console.log(`Stopping ${appConfig.name}...`);
