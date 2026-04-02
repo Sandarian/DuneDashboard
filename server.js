@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { exec } from 'child_process';
+import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -35,34 +36,71 @@ const apps = {
         id: 'provision',
         name: 'Provision',
         port: 3001,
-        // Using common paths, these might need adjusting on the actual Pi
-        startCmd: 'docker-compose up -d',
-        stopCmd: 'docker-compose down',
-        cwd: findAppDir(['Provision', 'DuneProvision'])
-    },
-    'chore-chart': {
-        id: 'chore-chart',
-        name: 'Chore Chart',
-        port: 3000,
-        startCmd: 'docker-compose up -d',
-        stopCmd: 'docker-compose down',
-        cwd: findAppDir(['chore-chart', 'DuneStewardship'])
+        startCmd: 'docker compose up -d',
+        stopCmd: 'docker compose down',
+        cwd: findAppDir(['Provision'])
     },
     'dnd-builder': {
         id: 'dnd-builder',
         name: 'D&D Character Builder',
         port: 5173,
-        // On the Pi, this will likely be managed by PM2, but for local testing:
         startCmd: 'npm run dev > /dev/null 2>&1 &',
-        stopCmd: 'pkill -f "vite"', // Needs refinement for production
-        cwd: findAppDir(['DnDCharacterBuilder'])
+        stopCmd: 'pkill -f "vite"',
+        cwd: findAppDir(['DnDPalette'])
+    },
+    flavor: {
+        id: 'flavor',
+        name: 'Flavor',
+        port: 3003,
+        startCmd: 'docker compose up -d',
+        stopCmd: 'docker compose down',
+        cwd: findAppDir(['Flavor'])
+    },
+    stewardship: {
+        id: 'stewardship',
+        name: 'Stewardship',
+        port: 3004,
+        startCmd: 'docker compose up -d',
+        stopCmd: 'docker compose down',
+        cwd: findAppDir(['Stewardship'])
+    },
+    chronicle: {
+        id: 'chronicle',
+        name: 'Chronicle',
+        port: 3005,
+        startCmd: 'node server.js > /dev/null 2>&1 &',
+        stopCmd: 'pkill -f "Chronicle/server.js"',
+        cwd: findAppDir(['Chronicle'])
     }
 };
 
-const PORT = 4000;
+const PORT = 3000;
+
+// Probe a port with a lightweight HTTP GET; resolves true if anything responds
+function checkAppHealth(port) {
+    return new Promise((resolve) => {
+        const req = http.get({ hostname: 'localhost', port, path: '/', timeout: 3000 }, (res) => {
+            res.resume();
+            resolve(true);
+        });
+        req.on('error', () => resolve(false));
+        req.on('timeout', () => { req.destroy(); resolve(false); });
+    });
+}
 
 app.get('/api/apps', (req, res) => {
     res.json(Object.values(apps));
+});
+
+// Batch health check for all apps
+app.get('/api/status', async (req, res) => {
+    const results = await Promise.all(
+        Object.values(apps).map(async (a) => ({
+            id: a.id,
+            running: await checkAppHealth(a.port)
+        }))
+    );
+    res.json(results);
 });
 
 app.post('/api/apps/:id/start', (req, res) => {
@@ -105,6 +143,6 @@ app.post('/api/apps/:id/stop', (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`Dashboard server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Oraclery running at http://localhost:${PORT}`);
 });
