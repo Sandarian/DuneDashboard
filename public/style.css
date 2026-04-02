@@ -142,13 +142,6 @@ header p {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Background edit button — bottom-right corner */
-.edit-bg-btn {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    z-index: 2;
-}
 
 .status-indicator {
     display: flex;

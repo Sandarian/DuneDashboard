@@ -2,6 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const appGrid = document.getElementById('app-grid');
     const template = document.getElementById('app-card-template');
 
+    // appId -> card DOM element
+    const cardMap = {};
+    // appId -> { action: 'start'|'stop', time: ms } — grace period after user-triggered actions
+    const actionTimestamps = {};
+    const GRACE_MS = 25000; // wait 25s before polling overrides a start action (containers take time to boot)
+    const POLL_INTERVAL_MS = 15000;
+
     // --- localStorage helpers ---
     function getCustomName(appId) {
         return localStorage.getItem(`appName_${appId}`);
@@ -16,14 +23,50 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem(`appBg_${appId}`, base64);
     }
 
+    // --- Apply a known running/stopped state to a card ---
+    function applyStatus(cardElement, isRunning) {
+        cardElement.classList.remove('running', 'stopped', 'working');
+        if (isRunning) {
+            cardElement.classList.add('running');
+            cardElement.querySelector('.status-text').textContent = 'Running';
+        } else {
+            cardElement.classList.add('stopped');
+            cardElement.querySelector('.status-text').textContent = 'Stopped';
+        }
+    }
+
+    // --- Poll all app statuses from the backend ---
+    function pollStatuses() {
+        fetch('/api/status')
+            .then(r => r.json())
+            .then(statuses => {
+                const now = Date.now();
+                statuses.forEach(({ id, running }) => {
+                    const card = cardMap[id];
+                    if (!card) return;
+                    // Don't overwrite while a command is in-flight
+                    if (card.classList.contains('working')) return;
+                    // Don't overwrite within the grace period after a start — the container may still be booting
+                    const ts = actionTimestamps[id];
+                    if (ts && ts.action === 'start' && (now - ts.time) < GRACE_MS) return;
+                    applyStatus(card, running);
+                });
+            })
+            .catch(err => console.error('Status poll failed:', err));
+    }
+
     // Fetch the list of apps from the backend
     fetch('/api/apps')
         .then(response => response.json())
         .then(apps => {
             apps.forEach(app => {
                 const card = createCard(app);
+                cardMap[app.id] = card;
                 appGrid.appendChild(card);
             });
+            // Check real status immediately, then on a recurring interval
+            pollStatuses();
+            setInterval(pollStatuses, POLL_INTERVAL_MS);
         })
         .catch(error => {
             console.error('Error fetching apps:', error);
@@ -81,19 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(file);
         });
 
-        // --- Setup initial state ---
-        cardElement.classList.add('stopped');
-        cardElement.querySelector('.status-text').textContent = 'Stopped';
+        // Start neutral — pollStatuses() will resolve real state shortly after
+        cardElement.querySelector('.status-text').textContent = 'Checking...';
 
         // --- Setup buttons ---
-        const startBtn = cardElement.querySelector('.start-btn');
-        const stopBtn = cardElement.querySelector('.stop-btn');
         const openBtn = cardElement.querySelector('.open-btn');
-
         openBtn.href = `http://${window.location.hostname}:${app.port}`;
 
-        startBtn.addEventListener('click', () => handleAction(app.id, 'start', cardElement));
-        stopBtn.addEventListener('click', () => handleAction(app.id, 'stop', cardElement));
+        cardElement.querySelector('.start-btn').addEventListener('click', () => handleAction(app.id, 'start', cardElement));
+        cardElement.querySelector('.stop-btn').addEventListener('click', () => handleAction(app.id, 'stop', cardElement));
 
         return cardElement;
     }
@@ -109,17 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 cardElement.classList.remove('working');
 
                 if (data.success) {
-                    if (action === 'start') {
-                        cardElement.classList.add('running');
-                        cardElement.querySelector('.status-text').textContent = 'Running';
-                    } else {
-                        cardElement.classList.add('stopped');
-                        cardElement.querySelector('.status-text').textContent = 'Stopped';
-                    }
+                    // Record the timestamp so polls don't overwrite during the boot grace period
+                    actionTimestamps[appId] = { action, time: Date.now() };
+                    applyStatus(cardElement, action === 'start');
                 } else {
                     alert(`Error: ${data.error}`);
-                    cardElement.classList.add(action === 'start' ? 'stopped' : 'running');
-                    cardElement.querySelector('.status-text').textContent = action === 'start' ? 'Stopped' : 'Running';
+                    // Revert to opposite of what we tried
+                    applyStatus(cardElement, action === 'start' ? false : true);
                 }
             })
             .catch(error => {
