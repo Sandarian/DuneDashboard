@@ -71,6 +71,14 @@ const apps = {
         startCmd: 'node server.js > /dev/null 2>&1 &',
         stopCmd: 'pkill -f "Chronicle/server.js"',
         cwd: findAppDir(['Chronicle'])
+    },
+    reliquary: {
+        id: 'reliquary',
+        name: 'Reliquary',
+        port: 3006,
+        startCmd: 'docker compose up -d',
+        stopCmd: 'docker compose down',
+        cwd: findAppDir(['Reliquary'])
     }
 };
 
